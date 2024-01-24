@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import Auth from './components/Auth.js';
 import {db} from './config/firebase.js'
-import { getDocs, collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getDocs, collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 function App() {
   const [todos,setTodos] = useState([])
 
   const [newTodo, setNewTodo] = useState('')
   const [newDesc, setNewDesc] = useState('')
+  const [newTitle, setNewTitle] = useState('')
 
   const todosCollectionRef = collection(db,'todos')
   
@@ -27,6 +28,14 @@ function App() {
   } catch (error) {
     console.log(error)
   }
+  }
+  const updateTitle = async (id) =>{
+    const todoDoc = doc(db, "todos",id)
+
+    await updateDoc(todoDoc, {title : newTitle})
+    // getDocs()
+    setNewTitle('')
+    getTodos()
   }
   const deleteTodo = async (id) =>{
     const todoDoc = doc(db, "todos",id)
@@ -70,6 +79,8 @@ function App() {
             <h1>{todo.title}</h1>
             <p>{todo.description}</p>
             <button onClick={()=>deleteTodo(todo.id)}>Delete Todo</button>
+            <input type="text" placeholder='new Title' onChange={(e)=>setNewTitle(e.target.value)}/>
+            <button onClick={()=>updateTitle(todo.id)}>Update Title</button>
           </div>
         ))}
       </div>
