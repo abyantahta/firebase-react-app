@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import Auth from './components/Auth.js';
-import {db} from './config/firebase.js'
+import {auth, db,storage} from './config/firebase.js'
 import { getDocs, collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes } from 'firebase/storage';
 function App() {
   const [todos,setTodos] = useState([])
 
   const [newTodo, setNewTodo] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newTitle, setNewTitle] = useState('')
-
+  const [fileUpload,setFileUpload] = useState(null)
   const todosCollectionRef = collection(db,'todos')
   
   const getTodos = async () =>{
@@ -30,27 +31,38 @@ function App() {
   }
   }
   const updateTitle = async (id) =>{
-    const todoDoc = doc(db, "todos",id)
-
-    await updateDoc(todoDoc, {title : newTitle})
-    // getDocs()
-    setNewTitle('')
-    getTodos()
+    try {
+      const todoDoc = doc(db, "todos",id)
+  
+      await updateDoc(todoDoc, {title : newTitle})
+      // getDocs()
+      setNewTitle('')
+      getTodos()
+      
+    } catch (error) {
+      console.log(error)
+    }
   }
   const deleteTodo = async (id) =>{
-    const todoDoc = doc(db, "todos",id)
-
-    // const 
-    await deleteDoc(todoDoc)
-    // getDocs()
-    getTodos()
+    try {
+      const todoDoc = doc(db, "todos",id)
+  
+      // const 
+      await deleteDoc(todoDoc)
+      // getDocs()
+      getTodos()
+      
+    } catch (error) {
+      console.log(error)
+    }
   }
   
   const onSubmitTodo = async () => {
     try {
       await addDoc(todosCollectionRef,{
         title : newTodo,
-        description : newDesc
+        description : newDesc,
+        userId : auth?.currentUser?.uid
       })
       setNewTodo('')
       setNewDesc('')
@@ -58,6 +70,20 @@ function App() {
       
     } catch (err) {
       console.log(err)
+    }
+  }
+
+  const uploadFile = async () =>{
+    // console.log(fileUpload)
+    if(!fileUpload) return;
+    console.log(fileUpload)
+    const filesFolderRef = ref(storage, `projectFiles/${fileUpload[0].name}`)
+    try {
+      console.log(filesFolderRef)
+      console.log(fileUpload)
+      await uploadBytes(filesFolderRef,fileUpload[0])
+    } catch (error) {
+      console.log(error)
     }
   }
   useEffect(()=>{
@@ -83,6 +109,10 @@ function App() {
             <button onClick={()=>updateTitle(todo.id)}>Update Title</button>
           </div>
         ))}
+      </div>
+      <div className="">
+        <input type="file" onChange={(e)=>{setFileUpload(e.target.files)}} />
+        <button onClick={uploadFile}> Uploadfile </button>
       </div>
     </div>
   );
